@@ -3,12 +3,14 @@
 # pylint: disable=import-outside-toplevel
 
 import os
+import sys
 
-import newrelic.agent
+try:
+    import newrelic.agent
 
-# Initialize newrelic agent before importing anything else
-# The newrelic config file is hardcoded because we can't import nothing before this :-(
-newrelic.agent.initialize(f"{os.getcwd()}/newrelic.ini")
+    newrelic.agent.initialize(f"{os.getcwd()}/newrelic.ini")
+except Exception as exc:  # pylint: disable=broad-except
+    print(f"Warning: newrelic initialization failed: {exc}", file=sys.stderr)
 
 
 from . import create_app  # noqa: E402
