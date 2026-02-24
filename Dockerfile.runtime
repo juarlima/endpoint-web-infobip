@@ -1,1 +1,4 @@
 FROM hub.furycloud.io/mercadolibre/distroless-python:3.11-mini
+
+ENV PATH="/app/venv/bin:${PATH}" \
+    VIRTUAL_ENV="/app/venv"
