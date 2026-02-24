@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: endpoint-web-infobip
+    runtime: python
+    buildCommand: pip install -r requirements-external.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 "app.__main__:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"

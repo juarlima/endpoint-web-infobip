@@ -3,7 +3,11 @@
 import os
 
 from flask import Flask
-from opentelemetry.instrumentation.flask import FlaskInstrumentor
+
+try:
+    from opentelemetry.instrumentation.flask import FlaskInstrumentor
+except ImportError:
+    FlaskInstrumentor = None
 
 from app.api import api_bp
 from app.dummy import dummy
@@ -18,7 +22,7 @@ def instrument_app(app: Flask) -> None:
     """Instrument app with OpenTelemetry."""
     enabled = os.getenv("OTEL_AGENT_ENABLED", "false")
 
-    if enabled == "true":
+    if enabled == "true" and FlaskInstrumentor is not None:
         FlaskInstrumentor().instrument_app(app)
 
 
