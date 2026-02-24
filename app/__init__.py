@@ -5,12 +5,13 @@ import os
 from flask import Flask
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
+from app.api import api_bp
 from app.dummy import dummy
 from app.ping import ping
 
 # Active endpoints noted as following:
 # (url_prefix, blueprint_object)
-ACTIVE_ENDPOINTS = (("/", ping), ("/dummy", dummy))
+ACTIVE_ENDPOINTS = (("/", ping), ("/dummy", dummy), ("/api", api_bp))
 
 
 def instrument_app(app: Flask) -> None:

@@ -1,42 +1,40 @@
-"""Load and index CSV data files for fast lookup."""
+"""Load and index CSV data files for range-based CEP lookup."""
 
 import csv
 import os
 from typing import Optional
 
 
-_coverage_index: dict[tuple[str, str], dict] = {}
-_pricing_index: dict[tuple[str, str], dict] = {}
+_fm_rows: list[dict] = []
+_lm_rows: list[dict] = []
 _loaded = False
 
+DATA_DIR = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "data")
+)
 
-def _data_path(filename: str) -> str:
-    base = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "data")
-    return os.path.normpath(os.path.join(base, filename))
 
-
-def _load_csv(filepath: str) -> list[dict]:
+def _load_csv(filename: str) -> list[dict]:
+    filepath = os.path.join(DATA_DIR, filename)
     with open(filepath, newline="", encoding="utf-8") as f:
-        return list(csv.DictReader(f))
-
-
-def _build_index(rows: list[dict]) -> dict[tuple[str, str], dict]:
-    index: dict[tuple[str, str], dict] = {}
+        rows = list(csv.DictReader(f))
     for row in rows:
-        key = (row["cep"].strip(), row["vehicle_type"].strip().lower())
-        index[key] = row
-    return index
+        row["ZIP_CODE_INIT"] = int(row["ZIP_CODE_INIT"])
+        row["ZIP_CODE_END"] = int(row["ZIP_CODE_END"])
+        row["TIPO_VEICULO"] = row["TIPO_VEICULO"].strip().upper()
+    return rows
 
 
 def load_data() -> None:
-    """Load CSVs into memory and build lookup indexes."""
-    global _coverage_index, _pricing_index, _loaded  # noqa: PLW0603
+    """Load CSVs into memory."""
+    global _fm_rows, _lm_rows, _loaded  # noqa: PLW0603
 
-    coverage_rows = _load_csv(_data_path("coverage.csv"))
-    pricing_rows = _load_csv(_data_path("pricing.csv"))
+    _fm_rows = _load_csv("TABELA_API_FM.csv")
 
-    _coverage_index = _build_index(coverage_rows)
-    _pricing_index = _build_index(pricing_rows)
+    lm_path = os.path.join(DATA_DIR, "TABELA_API_LM.csv")
+    if os.path.exists(lm_path):
+        _lm_rows = _load_csv("TABELA_API_LM.csv")
+
     _loaded = True
 
 
@@ -45,25 +43,32 @@ def _ensure_loaded() -> None:
         load_data()
 
 
-def get_coverage(cep: str, vehicle_type: str) -> Optional[dict]:
-    """Return coverage info for a CEP + vehicle_type, or None."""
+def _find_rows(
+    rows: list[dict], cep: int, vehicle_type: Optional[str] = None
+) -> list[dict]:
+    """Find all rows where cep is within ZIP_CODE_INIT..ZIP_CODE_END range."""
+    results = []
+    for row in rows:
+        if row["ZIP_CODE_INIT"] <= cep <= row["ZIP_CODE_END"]:
+            if vehicle_type is None or row["TIPO_VEICULO"] == vehicle_type.strip().upper():
+                results.append(row)
+    return results
+
+
+def query_fm(cep: int, vehicle_type: Optional[str] = None) -> list[dict]:
+    """Query FM table by CEP and optional vehicle type."""
     _ensure_loaded()
-    return _coverage_index.get((cep.strip(), vehicle_type.strip().lower()))
+    return _find_rows(_fm_rows, cep, vehicle_type)
 
 
-def get_pricing(cep: str, vehicle_type: str) -> Optional[dict]:
-    """Return pricing info for a CEP + vehicle_type, or None."""
+def query_lm(cep: int, vehicle_type: Optional[str] = None) -> list[dict]:
+    """Query LM table by CEP and optional vehicle type."""
     _ensure_loaded()
-    return _pricing_index.get((cep.strip(), vehicle_type.strip().lower()))
+    return _find_rows(_lm_rows, cep, vehicle_type)
 
 
-def get_valid_vehicle_types() -> set[str]:
-    """Return the set of valid vehicle types from loaded data."""
+def get_valid_vehicle_types(table: str = "fm") -> set[str]:
+    """Return the set of valid vehicle types."""
     _ensure_loaded()
-    return {k[1] for k in _coverage_index}
-
-
-def get_valid_ceps() -> set[str]:
-    """Return the set of valid CEPs from loaded data."""
-    _ensure_loaded()
-    return {k[0] for k in _coverage_index}
+    rows = _fm_rows if table == "fm" else _lm_rows
+    return {r["TIPO_VEICULO"] for r in rows}
