@@ -30,6 +30,7 @@ def create_app() -> Flask:
     """Create Flask app."""
     app = Flask(__name__)
     app.json.ensure_ascii = False
+    app.config["RESTX_JSON"] = {"ensure_ascii": False}
 
     # accepts both /endpoint and /endpoint/ as valid URLs
     app.url_map.strict_slashes = False
