@@ -1,0 +1,15 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.github/
+.code_quality/
+.agentic-rules/
+tests/
+*.md
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
