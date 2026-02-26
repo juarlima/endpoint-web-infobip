@@ -5,6 +5,7 @@ from http import HTTPStatus
 from flask import Blueprint, request
 from flask_restx import Api, Resource, reqparse
 
+from app.api.auth import require_api_key
 from app.api.services import lookup, validate_input
 
 api_bp = Blueprint("api", __name__)
@@ -27,6 +28,7 @@ class ValidateResource(Resource):
     """Validate CEP + vehicle type combination."""
 
     @api.expect(query_parser)
+    @require_api_key
     def get(self):
         """Validate if CEP and vehicle_type are accepted."""
         args = query_parser.parse_args()
@@ -47,6 +49,7 @@ class FMResource(Resource):
     """Query FM (First Mile) table."""
 
     @api.expect(query_parser)
+    @require_api_key
     def get(self):
         """Look up FM table by CEP and optional vehicle type."""
         args = query_parser.parse_args()
@@ -65,6 +68,7 @@ class LMResource(Resource):
     """Query LM (Last Mile) table."""
 
     @api.expect(query_parser)
+    @require_api_key
     def get(self):
         """Look up LM table by CEP and optional vehicle type."""
         args = query_parser.parse_args()
