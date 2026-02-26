@@ -17,10 +17,10 @@ def require_api_key(f):
         if not expected_key:
             return {"error": "API key not configured on server"}, HTTPStatus.INTERNAL_SERVER_ERROR
 
-        provided_key = request.headers.get("X-API-Key")
+        provided_key = request.headers.get("X-API-Key") or request.args.get("api_key")
 
         if not provided_key:
-            return {"error": "Missing X-API-Key header"}, HTTPStatus.UNAUTHORIZED
+            return {"error": "Missing API key (header X-API-Key or query param api_key)"}, HTTPStatus.UNAUTHORIZED
 
         if provided_key != expected_key:
             return {"error": "Invalid API key"}, HTTPStatus.UNAUTHORIZED
