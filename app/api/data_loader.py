@@ -67,6 +67,21 @@ def query_lm(cep: int, vehicle_type: Optional[str] = None) -> list[dict]:
     return _find_rows(_lm_rows, cep, vehicle_type)
 
 
+def query_location(cep: int) -> Optional[dict]:
+    """Return location info (bairro, cidade, uf) for a CEP, searching FM then LM."""
+    _ensure_loaded()
+    for rows in (_fm_rows, _lm_rows):
+        for row in rows:
+            if row["ZIP_CODE_INIT"] <= cep <= row["ZIP_CODE_END"]:
+                return {
+                    "cep": cep,
+                    "BAIRRO": row.get("BAIRRO", ""),
+                    "CIDADE_PRINCIPAL": row.get("CIDADE_PRINCIPAL", ""),
+                    "UF": row.get("UF", ""),
+                }
+    return None
+
+
 def get_valid_vehicle_types(table: str = "fm") -> set[str]:
     """Return the set of valid vehicle types."""
     _ensure_loaded()

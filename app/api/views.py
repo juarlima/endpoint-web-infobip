@@ -6,7 +6,7 @@ from flask import Blueprint, request
 from flask_restx import Api, Resource, reqparse
 
 from app.api.auth import require_api_key
-from app.api.services import lookup, validate_input
+from app.api.services import lookup, lookup_location, validate_input
 
 api_bp = Blueprint("api", __name__)
 
@@ -21,6 +21,28 @@ query_parser.add_argument("cep", type=str, required=True, help="CEP (8 digits)")
 query_parser.add_argument(
     "vehicle_type", type=str, required=False, help="Vehicle type (e.g. VUC, HR, VAN)"
 )
+
+
+cep_parser = reqparse.RequestParser()
+cep_parser.add_argument("cep", type=str, required=True, help="CEP (8 digits)")
+
+
+@api.route("/cep")
+class CEPResource(Resource):
+    """Look up location info by CEP only."""
+
+    @api.expect(cep_parser)
+    @require_api_key
+    def get(self):
+        """Return bairro, cidade and UF for a given CEP."""
+        args = cep_parser.parse_args()
+        cep = args["cep"]
+
+        result = lookup_location(cep)
+        if not result:
+            return {"message": "CEP not found", "cep": cep}, HTTPStatus.NOT_FOUND
+
+        return result, HTTPStatus.OK
 
 
 @api.route("/validate")

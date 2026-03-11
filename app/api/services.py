@@ -2,7 +2,9 @@
 
 from typing import Optional
 
-from app.api.data_loader import get_valid_vehicle_types, query_fm, query_lm
+from typing import Optional as _Optional
+
+from app.api.data_loader import get_valid_vehicle_types, query_fm, query_lm, query_location
 from app.api.schemas import normalize_cep, validate_cep, validate_vehicle_type
 
 
@@ -36,3 +38,11 @@ def lookup(
 
     query_fn = query_fm if table == "fm" else query_lm
     return query_fn(cep_int, vehicle_type)
+
+
+def lookup_location(cep: str) -> _Optional[dict]:
+    """Look up location info (bairro, cidade, uf) by CEP."""
+    cep_int = normalize_cep(cep)
+    if cep_int is None:
+        return None
+    return query_location(cep_int)
